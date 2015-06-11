@@ -7,7 +7,7 @@ Study programming, Just save code.
 Foundation of socket programming. At low level interface like socket, Python is very similar to C.
 
 ##2014
-* 2014-09-10 **algorithm/sort_c** qsort.cpp and msort.cpp 
+* 2014-09-10 **algorithm/sort_c** qsort.cpp and msort.cpp  
 Quick sort and Merge sort with C++.
 
 
