@@ -10,13 +10,14 @@ Foundation of socket programming. At low level interface like socket, Python is 
 Some performance testing between pypy and defaut python.
 
 ##2014
-* 2014-10-3 **tools/thread_c** base.c mutex.c and sem.c
+* 2014-10-3 **tools/thread_c**
 Posix linux thread.  
-base.c, using method of base pthread function.  
-mutex.c, using method of pthread function with mutex.  
-sem.c, using method of pthread function with semaphore.  
+base.c: using method of base pthread function.  
+mutex.c: using method of pthread function with mutex.  
+sem.c: using method of pthread function with semaphore.  
 
-* 2014-09-10 **algorithm/sort_c** qsort.cpp and msort.cpp  
-Quick sort and Merge sort with C++.
+* 2014-09-10 **algorithm/sort_c**
+qsort.cpp and msort.cpp  
+Quick sort and Merge sort with C++.  
 
 
