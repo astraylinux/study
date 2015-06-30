@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "type	python		pypy"
+types=('str' 'arr' 'dict' 'json' 'md5' 'sort')
+names=('字符串' '列表' '字典' 'Json' 'md5' '排序')
+len=${#types[@]}
+
+for((i=0; i<$len; i++));do
+	echo -n ${names[$i]}"	"`python compute.py ${types[$i]}`"		"
+	echo `pypy compute.py ${types[$i]}`
+done
+
