@@ -20,36 +20,43 @@ void **thread_return //指针thread_return指向的位置存放的是终止线�
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
-#define THREAD_NUM 2
+#define THREAD_NUM 4
 
-void one_thread_execute(void *ptr);
+void one_thread_execute_base(void *ptr);
 
 int main(int argc, char **argv){
 	pthread_t threads[THREAD_NUM];
+	int thread_num[THREAD_NUM];
 	int start_ret[THREAD_NUM];
 	void *retval[THREAD_NUM];
+	unsigned int index;
 
-	unsigned int index = 0;
+	for(index = 0; index < THREAD_NUM; index++)
+		thread_num[index] = index;
+
 	for(index = 0; index < THREAD_NUM; index++){
-		start_ret[THREAD_NUM] = pthread_create(&threads[index], NULL, \
-				(void *)&one_thread_execute, (void *)&index);
-		if(start_ret != 0)
+		start_ret[index] = pthread_create(&threads[index], NULL, \
+				(void *)one_thread_execute_base, (void *)&thread_num[index]);
+		if(start_ret[index] != 0)
 			printf("Thread %d create failed. => %d\n", index, start_ret[index]);
 		else
 			printf("Thread %d create succeed.\n", index);
-		usleep(0.1 * 1000);
 	}
 
-	pthread_join(threads[THREAD_NUM-1], &retval[THREAD_NUM-1]);
-	printf("thread -1 retval: %d", *(int*)retval[THREAD_NUM-1]);
+	int ret;
+	for(index = 0; index < THREAD_NUM; index++){
+		if((ret = pthread_join(threads[index], &retval[index])) == 0)
+			printf("thread %d retval: %d\n", index, *(int*)&retval[index]);
+		else
+			printf("join thread %d failed: %d\n", index, ret);
+	}
 }
 
-
-void one_thread_execute(void *ptr){
+//普通线程操作，展示多线程
+void one_thread_execute_base(void *ptr){
 	int num = *(int *)ptr;
 	unsigned int index = 0;
 	for(index = 0; index < 5; index++){
-		usleep(1 * 1000);
-		printf("Thread %d report.\n", num);
+		printf("Thread report: %d\n", num);
 	}
 }
