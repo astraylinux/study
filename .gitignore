@@ -1,4 +1,5 @@
 backup/*
 *.pyc
 *.bin
+*.so
 
