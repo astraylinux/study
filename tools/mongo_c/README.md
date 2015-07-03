@@ -1,4 +1,6 @@
-#Use Mongo C Driver To Upset Data.
+#Use Mongo C Driver To Upsert Data.
+
+[https://github.com/astraylinux/study/tree/master/tools/mongo_c](https://github.com/astraylinux/study/tree/master/tools/mongo_c)
 
 Recently, I try to optimized a python module which accepts json string from redis-server and update-insert to mongodb. The performance of **pymongo** is terrible, and because of the [GIL](https://en.wikipedia.org/wiki/Global_Interpreter_Lock), I even can't improve the performance through multi thread. So, I try to figure out by use C language.
 
