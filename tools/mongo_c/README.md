@@ -1,10 +1,10 @@
 #Use Mongo C Driver To Upsert Data.
 
-Recently, I try to optimized a python module which accepts json string from redis-server and update-insert to mongodb. The performance of **pymongo** is terrible, and because of the [GIL](https://en.wikipedia.org/wiki/Global_Interpreter_Lock), I even can't improve the performance through multi thread. So, I try to figure out by use C language.
+Recently, I have tried to optimize a python module which accepts json string from redis-server and update-insert to Mongodb. The performance of **pymongo** is terrible, and because of the [GIL](https://en.wikipedia.org/wiki/Global_Interpreter_Lock), I even can't improve the performance through multi thread. So, I try to figure out by use C language.
 
-The mongodb development library of 'C' is [**mongo-c-driver**](https://github.com/mongodb/mongo-c-driver). Install it.
+The Mongodb development library of 'C' is [**mongo-c-driver**](https://github.com/mongodb/mongo-c-driver). Install it.
 
-In 'mongo-c-driver', the main data structure is not 'json', It use 'bson'([libbson](https://github.com/mongodb/libbson)) to intead. If you want to study libbson through the doc, you could use the command 'yelp' to open it(If you are using a linux with GUI) or covert the [Mallard](http://projectmallard.org/) to html.
+In 'mongo-c-driver', the main data structure is not 'json', It uses 'Bson'([libbson](https://github.com/mongodb/libbson)) to instead. If you want to study libbson through the doc, you could use the command 'yelp' to open it(If you are using a Linux with GUI) or covert the [Mallard](http://projectmallard.org/) to Html.
 ```bash
 yelp-build html *.page
 ```
@@ -27,9 +27,9 @@ bson.bin:
 ```
 
 ##libupdate.c
-This is the main program that I will use in my project. I compile it to a '.so' file, then I can call the function by 'C', 'python' or other program language.
+This is the main program that I will use in my project. I compile it to a '.so' file, then I can call the functions by 'C', 'python' or other program languages.
 
-The key is use the 'mongo_updater' pointer as a 'void' pointer,  in this way, I can call all the functions in python without define any class to fit the 'mongo_updater' structure(I really no idear about it, how can I define a class to fit a structure that contain a mongc_client_t pointer and mongoc_collection_t pointer.).
+The key is using the 'mongo_updater' pointer as a 'void' pointer,  in this way, I can call all the functions in python without defining any class to fit the 'mongo_updater' structure(I really no idear about it, how can I define a class to fit a structure that contain a mongc_client_t pointer and mongoc_collection_t pointer.).
 ```c
 //This struction include data array and mongo client.collection for
 //each thread.(use the struct pointer.)
@@ -66,9 +66,9 @@ int update2mongo(void *v_updater, const char *json_str);
 ```
 
 ##test.c and test.py
-In test.c, I have to write a fuction to achieve 'urlencode'. In 'mongo-c-driver', connect to mongodb is use a url that contain user name, password, host and auth source. It's url, so some special characters have to be dealed by urlencode. I was connecting with mongodb, then, I readed some data from 'test.data' and converted to a bson object, then update to mongodb at last.
+In 'test.c', I have to write a function to achieve 'urlencode'. In 'mongo-c-driver', connect to Mongodb is use a url that contain user name, password, host and auth source. It's url, so some special characters have to be handled by urlencode. I was connecting with Mongodb, then, I read some data from 'test.data' and converted to a Bson object, then update to Mongodb at last.
 
-In test.py, The 'ctypes' module is necessary, then I load the 'libupdate.so' and redefine the functions by python, then call they. It's easy.
+In test.py, The 'ctypes' module is necessary, then I load the 'libupdate.so' and redefine the functions by python, then call them. It's easy.
 ```python
 #!/usr/bin/env python
 # encoding: utf-8
@@ -99,3 +99,9 @@ destroy_mongo = libupdater.destroy_mongo
 destroy_mongo.argtypes = [c_void_p]
 destroy_mongo.restype = c_void_p
 ```
+
+
+
+
+
+
