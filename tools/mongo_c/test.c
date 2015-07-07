@@ -124,6 +124,8 @@ int main (int argc, char *argv[]){
 
 	destroy_mongo(updater);
 	destroy_mongo_updater(updater);
+	bson_free(json_str);
+	bson_destroy(&root);
 
 	printf("ok\n");
 }
