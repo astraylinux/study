@@ -3,6 +3,9 @@ Study programming, Just save code.
 
 
 ##2015
+* 2015-07-3 **tools/mongo_c**  
+Update and insert mongodb through mongo_c_driver, and reference it in python program.
+
 * 2015-06-10 **network/socket_py**  
 Foundation of socket programming. At low level interface like socket, Python is very similar to C.
 
