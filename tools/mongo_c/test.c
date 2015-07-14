@@ -94,8 +94,8 @@ bool read_from_file(bson_t *root, char const *data_file, unsigned const limit){
 }
 
 int main (int argc, char *argv[]){
-	char *password = "$123";
-	char * mg_url = "mongodb://test:%s@localhost/?authSource=admin";
+	//char *password = "$123";
+	//char * mg_url = "mongodb://test:%s@localhost/?authSource=admin";
 	char ret_str[64] = {'\0'};
 	char uri[512] = {'\0'};
 	http_url_encode(password, ret_str, true);
@@ -108,7 +108,7 @@ int main (int argc, char *argv[]){
 	void *updater = new_mongo_updater();
 	char *test_db = "test";
 	char *test_collection = "test";
-	init_mongo(updater, uri, test_db, test_collection, 3);
+	init_mongo(updater, uri, test_db, test_collection, 1);
 
 
 	const char * DATA_FILE = "./test.data";
@@ -118,7 +118,6 @@ int main (int argc, char *argv[]){
 	char * json_str = bson_as_json(&root, NULL);
 	printf("key count in main: %d\n", bson_count_keys(&root));
 
-	update2mongo(updater, json_str);
 	update2mongo(updater, json_str);
 
 

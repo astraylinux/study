@@ -94,33 +94,56 @@ bool init_mongo(void *v_updater, const char *mongo_url, const char *database,\
 	return true;
 }
 
+bool bulk_execute(mongoc_bulk_operation_t *bulk){
+	bool ret;
+	bson_t reply;
+	bson_error_t error;
 
+	ret = mongoc_bulk_operation_execute(bulk, &reply, &error);
+	if(! ret)
+		fprintf(stderr, "mongoc bulk execute failed: %s\n", error.message);
+	//else
+	//	print_bson(reply);
+	bson_destroy(&reply);
+	mongoc_bulk_operation_destroy(bulk);
+	return ret;
+}
 
 //Main function of update to mongo. Called in every thread.
 bool into_mongo(bson_t *root[], mongoc_collection_t *collection){
+	bson_iter_t set_iter;
 	bson_iter_t id_iter;
 	bson_t *query;
-	bson_error_t error;
+	bson_t reply;
+	mongoc_bulk_operation_t *bulk;
 
+	bulk = mongoc_collection_create_bulk_operation(collection, false, NULL);
 	unsigned index = 0;
 	while(root[index] != NULL){
 		bson_t *item = root[index];
+		print_bson(*item);
 
-		bson_iter_init(&id_iter, item);
-		bson_iter_find(&id_iter, "_id");
+		bson_iter_init(&set_iter, item);
+		bson_iter_find_descendant(&set_iter, "$set._id", &id_iter);
 
 		uint32_t id = bson_iter_value(&id_iter)->value.v_int32;
 		query = BCON_NEW("_id", BCON_INT32(id));
 
-		if(!mongoc_collection_update(collection, MONGOC_UPDATE_UPSERT, query, \
-				item, NULL, &error)){
-			fprintf(stderr, "%s\n", error.message);
-		}
+		mongoc_bulk_operation_update_one(bulk, query, item, true);
+
 		bson_destroy(query);
 		bson_destroy(root[index]);
 		root[index] = NULL;
 		index++;
+
+		if(index%500 == 0){
+			bulk_execute(bulk);
+			bulk = mongoc_collection_create_bulk_operation(collection, false, NULL);
+		}
 	}
+
+	if( index%500 > 0 )
+		bulk_execute(bulk);
 
 	//printf("End index in into_mongo: %d\n", index);
 	return true;
@@ -138,28 +161,34 @@ void into_mongo_thread(void *ptr){
 bool split_bson(bson_t *root, bson_t *data_pool[][MAX_ROW], const unsigned thread_num){
 	bson_iter_t iter;
 	bson_error_t error;
-	bson_t *query;
+	uint8_t *doc_data;
+	uint32_t doc_len;
+
 	if(!bson_iter_init(&iter, root))
 		return false;
 
 	unsigned index = 0;
 	while(bson_iter_next(&iter)){
 		if(BSON_ITER_HOLDS_DOCUMENT(&iter)){
-			const bson_value_t *row = bson_iter_value(&iter);
+			const bson_value_t *row= bson_iter_value(&iter);
 			if(! row->value_type == BSON_TYPE_DOCUMENT){
 				fprintf(stderr, "%d value type error.", index);
 				continue;
 			}
 
-			uint8_t *doc_data = row->value.v_doc.data;
-			uint32_t doc_len = row->value.v_doc.data_len;
+			bson_t *item = bson_new();
+			bson_t *child;
 
-			data_pool[index % thread_num][index / thread_num] =\
-				bson_new_from_data(doc_data, doc_len);
+			doc_data = row->value.v_doc.data;
+			doc_len = row->value.v_doc.data_len;
+			child = bson_new_from_data(doc_data, doc_len);
+			bson_append_document(item, "$set", 4, child);
 
+			data_pool[index % thread_num][index / thread_num] = item;
 			index ++;
 		}
 	}
+
 }
 
 
