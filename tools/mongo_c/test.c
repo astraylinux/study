@@ -94,8 +94,8 @@ bool read_from_file(bson_t *root, char const *data_file, unsigned const limit){
 }
 
 int main (int argc, char *argv[]){
-	//char *password = "$123";
-	//char * mg_url = "mongodb://test:%s@localhost/?authSource=admin";
+	char *password = "$123";
+	char * mg_url = "mongodb://test:%s@localhost/?authSource=admin";
 	char ret_str[64] = {'\0'};
 	char uri[512] = {'\0'};
 	http_url_encode(password, ret_str, true);
