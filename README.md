@@ -23,4 +23,6 @@ sem.c: using method of pthread function with semaphore.
 qsort.cpp and msort.cpp  
 Quick sort and Merge sort with C++.  
 
+* 2014-08-20 **tools/xpath_py**  
+xpath.py: test of python-lxml.  
 
