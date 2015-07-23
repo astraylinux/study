@@ -4,35 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-typedef void* rb_key_t;
-typedef void* rb_data_t;
-typedef char rb_bool;
-
-typedef enum color_t{
-	RED = 0,
-	BLACK = 1,
-}color_t;
-
-typedef struct rb_node_t{
-	struct rb_node_t *parent;
-	struct rb_node_t *left;
-	struct rb_node_t *right;
-	rb_key_t key;
-	rb_data_t data;
-	color_t color;
-}rb_node_t;
-
-
-typedef rb_bool (*rb_compare_func_t)(rb_key_t, rb_key_t);
-
-rb_node_t* rb_insert(rb_key_t key, rb_data_t data, rb_node_t* root);
-rb_node_t* rb_search(rb_key_t key, rb_node_t* root);
-rb_node_t* rb_erase(rb_key_t key, rb_node_t* root);
-
-static rb_node_t* rb_insert_rebalance(rb_node_t *node, rb_node_t *root);
-static rb_node_t* rb_erase_rebalance(rb_node_t *node, rb_node_t *parent, rb_node_t *root);
-
+#include "rbtree.h"
 
 static rb_node_t* rb_new_node(rb_key_t key, rb_data_t data){
 	rb_node_t *node = (rb_node_t*)malloc(sizeof(struct rb_node_t));
@@ -47,10 +19,10 @@ static rb_node_t* rb_new_node(rb_key_t key, rb_data_t data){
 	return node;
 }
 
+static void rb_rotate_left(rb_node_t *node, rb_node_t *root){
 /*
  * 左旋节点成为他的右子节点的左子，并且右子节点的左子成左旋节点的新右子
  */
-static void rb_rotate_left(rb_node_t *node, rb_node_t *root){
 	rb_node_t* right = node->right; //保存下节点的右子
 
 	//右子的左子成为左旋节点的新右子
@@ -72,10 +44,11 @@ static void rb_rotate_left(rb_node_t *node, rb_node_t *root){
 	node->parent = right;
 }
 
+
+static rb_node_t* rb_rotate_right(rb_node_t* node, rb_node_t* root){
 /*
  *  右旋节点成为他的左子节点的右子，并且左子节点的右子成左旋节点的新左子
  */
-static rb_node_t* rb_rotate_right(rb_node_t* node, rb_node_t* root){
 	rb_node_t* left = node->left;
 
 	if(node->left = left->right)
@@ -94,18 +67,19 @@ static rb_node_t* rb_rotate_right(rb_node_t* node, rb_node_t* root){
 	node->parent = left;
 }
 
+
+static rb_node_t* rb_locate_util(rb_key_t key, rb_node_t *root, rb_node_t **save,\
+		rb_func_t rb_func){
 /*
  * 查找定位节点
  */
-static rb_node_t* rb_locate_util(rb_key_t key, rb_node_t *root, rb_node_t **save,\
-		rb_compare_func_t rb_compare_func){
 	rb_node_t *node = root;
 	rb_node_t *parent = NULL;
 	rb_bool ret;
 
 	while(node){
 		parent = node;
-		ret = rb_compare_func(node->key, key);
+		ret = rb_func.compare(node->key, key);
 		if(ret > 0)
 			node = node->left;
 		else if (ret < 0)
@@ -120,7 +94,183 @@ static rb_node_t* rb_locate_util(rb_key_t key, rb_node_t *root, rb_node_t **save
 	return NULL;
 }
 
+
+rb_node_t* rb_search(rb_key_t key, rb_node_t* root, rb_func_t rb_func){
+/*
+ * 不保存父节点，单纯的返回
+ */
+	return rb_locate_util(key, root, NULL, rb_func);
+}
+
+
+rb_state_t rb_insert(rb_key_t key, rb_data_t data, rb_node_t *root, \
+		rb_func_t rb_func){
 /*
  * 插入新节点
  */
+	rb_node_t *parent = NULL;
+	rb_node_t *node;
+
+	if(node = rb_locate_util(key, root, &parent, rb_func))
+		return EXISTED;
+
+	node = rb_new_node(key, data);
+	//从locate返回的父节点，直接赋值给他
+	node->parent = parent;
+	node->left = node->right = NULL;
+	node->color = RED;
+
+	//如果有父节点的话，令新节点成为父节点的子节点
+	if(parent){
+		rb_bool ret = rb_func.compare(parent->key, key);
+		if(ret > 0)
+			parent->left = node;
+		else
+			parent->right = node;
+	}else{
+		root = node;
+	}
+
+	return rb_insert_rebalance(node, root);
+}
+
+
+rb_state_t rb_erase(rb_key_t key, rb_node_t *root, rb_func_t rb_func){
+/*
+ * 删除节点
+ */
+	rb_node_t *child;
+	rb_node_t *parent;
+	rb_node_t *old;
+	rb_node_t *left;
+	rb_node_t *node;
+	rb_color_t color;
+
+	//找到节点，没有的话返回错误
+	if( !(node = rb_locate_util(key, root, NULL, rb_func))){
+		fprintf(stderr, "key is not exist!\n");
+		return ERROR;
+	}
+
+	old = node;
+
+	if( node->left && node->right ){  //两个子节点都在的情况
+		node = node->right;
+		//遍历取右子树的最小值
+		while((left = node->left) != NULL)
+			node = left;
+
+		child = node->right;
+		parent = node->parent;
+		color = node->color;
+
+		//左子已经确认不存在了，看右子还在不在
+		//如果右子存在的话，右子要代替这个节点的位置(右子大于节点)
+		if(child)
+			child->parent = parent;
+
+		//处理替代节点的父节点(接上它的子节点)
+		if(parent){
+			if(parent->left == node)
+				parent->left = child;
+			else
+				parent->right = child;
+		}else{
+			root =  child;
+		}
+
+		if(node->parent == old)
+			parent = node;
+
+		//执行替换
+		node->parent = old->parent;
+		node->color = old->color;
+		node->right = old->right;
+		node->left = old->left;
+
+		if(old->parent){
+			if(old->parent->left == old)
+				old->parent->left = node;
+			else
+				old->parent->right = node;
+		}else{
+			root = node;
+		}
+
+		//由于选的是右边最小值，所原节点的左子一定在，不用判断
+		//而右子有可能是空的(右子只有一个，用来替换了)
+		old->left->parent = node;
+		if(old->right)
+			old->right->parent = node;
+	}else{
+		//非两子都在的情况,唯一子节点直接代替，没有则为空
+		child = node->left? node->left: node->right;
+
+		parent = node->parent;
+		color = node->color;
+
+		if(child)
+			child->parent = parent;
+
+		if(parent){
+			if(parent->left == node)
+				parent->left = child;
+			else
+				parent->right = child;
+		}else{
+			root = child;
+		}
+	}
+
+	rb_func.free(old);
+	//删除节点为红色时，性质不变，黑色则要调整
+	if(color == BLACK)
+		return rb_erase_rebalance(child, parent, root);
+
+	return SUCCEED;
+}
+
+static rb_state_t rb_insert_rebalance(rb_node_t *node, rb_node_t *root){
+	rb_node_t *parent;
+	rb_node_t *gparent;
+	rb_node_t *uncle;
+	rb_node_t *tmp;
+
+	while((parent = node->parent) && parent->color == RED){
+		gparent = parent->parent;
+
+		if(parent == gparent->left){
+			//父节点为祖节点的左子
+			uncle = gparent->right;
+
+			if(uncle && uncle->color == RED){
+				//情况1： 父节点为红色, 叔叔节点为红色
+				//由于新节点也是红色,性质五不符(红节点的子节点只能是黑)
+				uncle->color = BLACK;
+				parent->color = BLACK; //去掉连续红
+				gparent->color = RED;
+				//这时如果祖节点的父节点是红色，循环过后进入情况2，否则就完成了
+				node = gparent;
+			}else{
+				//情况2: 父节点是红（连续两红）,叔叔节点是黑，且当前节点是其父的右子
+				if(parent->right == node){
+					rb_rotate_left(parent, root);
+					//左旋位置关系变了，定位的指针要换
+					tmp = parent;
+					parent = node;
+					node = tmp;
+				}
+				//情况2处理完后，两个红色节点的位置互换了，但还是两红
+
+
+
+			}
+
+		}
+
+	}
+
+
+}
+
 
