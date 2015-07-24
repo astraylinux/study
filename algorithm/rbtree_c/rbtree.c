@@ -20,8 +20,7 @@ static rb_node_t* rb_new_node(rb_key_t key, rb_data_t data){
 }
 
 static void rb_rotate_left(rb_node_t *node, rb_node_t *root){
-/*
- * 左旋节点成为他的右子节点的左子，并且右子节点的左子成左旋节点的新右子
+/*左旋节点成为他的右子节点的左子，并且右子节点的左子成左旋节点的新右子
  */
 	rb_node_t* right = node->right; //保存下节点的右子
 
@@ -46,8 +45,7 @@ static void rb_rotate_left(rb_node_t *node, rb_node_t *root){
 
 
 static rb_node_t* rb_rotate_right(rb_node_t* node, rb_node_t* root){
-/*
- *  右旋节点成为他的左子节点的右子，并且左子节点的右子成左旋节点的新左子
+/*右旋节点成为他的左子节点的右子，并且左子节点的右子成左旋节点的新左子
  */
 	rb_node_t* left = node->left;
 
@@ -70,8 +68,7 @@ static rb_node_t* rb_rotate_right(rb_node_t* node, rb_node_t* root){
 
 static rb_node_t* rb_locate_util(rb_key_t key, rb_node_t *root, rb_node_t **save,\
 		rb_func_t rb_func){
-/*
- * 查找定位节点
+/*查找定位节点
  */
 	rb_node_t *node = root;
 	rb_node_t *parent = NULL;
@@ -96,8 +93,7 @@ static rb_node_t* rb_locate_util(rb_key_t key, rb_node_t *root, rb_node_t **save
 
 
 rb_node_t* rb_search(rb_key_t key, rb_node_t* root, rb_func_t rb_func){
-/*
- * 不保存父节点，单纯的返回
+/* 不保存父节点，单纯的返回
  */
 	return rb_locate_util(key, root, NULL, rb_func);
 }
@@ -105,8 +101,7 @@ rb_node_t* rb_search(rb_key_t key, rb_node_t* root, rb_func_t rb_func){
 
 rb_state_t rb_insert(rb_key_t key, rb_data_t data, rb_node_t *root, \
 		rb_func_t rb_func){
-/*
- * 插入新节点
+/* 插入新节点，并调用调整函数，使树保持性质
  */
 	rb_node_t *parent = NULL;
 	rb_node_t *node;
@@ -136,8 +131,7 @@ rb_state_t rb_insert(rb_key_t key, rb_data_t data, rb_node_t *root, \
 
 
 rb_state_t rb_erase(rb_key_t key, rb_node_t *root, rb_func_t rb_func){
-/*
- * 删除节点
+/** 删除节点, 如果删除的是黑色节点，刚需要重新调整树
  */
 	rb_node_t *child;
 	rb_node_t *parent;
@@ -231,6 +225,11 @@ rb_state_t rb_erase(rb_key_t key, rb_node_t *root, rb_func_t rb_func){
 }
 
 static rb_state_t rb_insert_rebalance(rb_node_t *node, rb_node_t *root){
+/* 插入节点后，重新平衡红黑树.有三种情况需要处理
+ * 情况1: 父节点为红色, 叔叔节点为红色
+ * 情况2: 父节点是红（连续两红）,叔叔节点是黑，且当前节点是其父的右子
+ * 情况3: 叔叔节点是黑色，节点为其父的左子
+ */
 	rb_node_t *parent;
 	rb_node_t *gparent;
 	rb_node_t *uncle;
@@ -261,16 +260,27 @@ static rb_state_t rb_insert_rebalance(rb_node_t *node, rb_node_t *root){
 					node = tmp;
 				}
 				//情况2处理完后，两个红色节点的位置互换了，但还是两红
-
-
-
+				//情况3：叔叔节点是黑色，节点为其父的左子
+				parent->color = BLACK;
+				gparent->color = RED;
+				root = rb_rotate_right(gparent, root);
 			}
-
 		}
-
 	}
-
-
 }
 
 
+static rb_state_t rb_erase_rebalance(rb_node_t *node, rb_node_t *parent, rb_node_t *root){
+/* 删除节点后，调整树，使其保持原有的性质
+ * 删除后如果替换节点是红，直接染黑就可以了
+ * 如果替换节点是黑色，且删除的是根节点，就什么都不做
+ * 其他共有四种情况需要调整
+ * 情况1:
+ * 情况2:
+ * 情况3:
+ * 情况4:
+ */
+
+
+
+}
