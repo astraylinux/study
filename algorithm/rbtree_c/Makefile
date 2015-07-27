@@ -1,10 +1,12 @@
 #libs
 CUR_PATH = $(shell pwd)
 
-#compiler
-CC = gcc
+
+test.bin: rbtree.o test.c
+	gcc -g test.c rbtree.o -o test.bin
 
 rbtree.o: rbtree.c
+	gcc -g -c rbtree.c -o rbtree.o
 
 clean:
-	rm rbtree.o
+	rm rbtree.o test.bin
